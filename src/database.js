@@ -3,7 +3,10 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-const DB_PATH = path.join(__dirname, '..', 'briefcase.db');
+const dataDir = process.env.NODE_ENV === 'production' && require('fs').existsSync('/app/data')
+  ? '/app/data'
+  : path.join(__dirname, '..');
+const DB_PATH = path.join(dataDir, 'briefcase.db');
 
 let db;
 
