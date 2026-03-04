@@ -3,3 +3,6 @@ briefcase.db
 uploads/*
 !uploads/.gitkeep
 .env
+.env
+briefcase.db-shm
+briefcase.db-wal

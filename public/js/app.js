@@ -13,7 +13,7 @@ async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API}${path}`, { ...options, headers: { ...headers, ...options.headers } });
-  if (res.status === 401) { logout(); return null; }
+  if (res.status === 401) { logout(); throw new Error('Session expired'); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -123,14 +123,16 @@ document.querySelectorAll('.sidebar-nav a').forEach(a => {
 
 // ---- Overview ----
 async function loadOverview() {
-  const [clients, projects] = await Promise.all([
-    api('/clients'),
-    api('/projects')
-  ]);
+  let clients, projects;
+  try {
+    [clients, projects] = await Promise.all([
+      api('/clients'),
+      api('/projects')
+    ]);
+  } catch { return; }
   clientsCache = clients;
 
   const active = projects.filter(p => p.status === 'active');
-  const totalRevenue = projects.reduce((sum, p) => sum, 0); // placeholder
 
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card">
@@ -156,7 +158,10 @@ async function loadOverview() {
 
 // ---- Clients ----
 async function loadClients() {
-  const clients = await api('/clients');
+  let clients;
+  try {
+    clients = await api('/clients');
+  } catch { return; }
   clientsCache = clients;
 
   if (!clients.length) {
@@ -188,15 +193,33 @@ async function loadClients() {
   `).join('');
 }
 
-function showClientProjects(clientId) {
-  navigate('projects');
-  // TODO: filter by client
+async function showClientProjects(clientId) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+  const navLink = document.querySelector('[data-page="projects"]');
+  if (navLink) navLink.classList.add('active');
+  document.getElementById('page-projects').style.display = 'block';
+
+  try {
+    const projects = await api('/projects');
+    const filtered = projects.filter(p => p.client_id === clientId);
+    const client = clientsCache.find(c => c.id === clientId);
+    const label = client ? `${client.name}'s Projects` : 'Projects';
+    document.querySelector('#page-projects .page-header h2').textContent = label;
+    renderProjectList(filtered, 'projectsList');
+  } catch { return; }
 }
 
 // ---- Projects ----
 async function loadProjects() {
-  const projects = await api('/projects');
-  renderProjectList(projects, 'projectsList');
+  try {
+    const [projects, clients] = await Promise.all([
+      api('/projects'),
+      api('/clients')
+    ]);
+    clientsCache = clients;
+    renderProjectList(projects, 'projectsList');
+  } catch { return; }
 }
 
 function renderProjectList(projects, containerId) {
@@ -239,7 +262,10 @@ function renderProjectList(projects, containerId) {
 async function loadProjectDetail(projectId) {
   if (!projectId) return navigate('projects');
 
-  const project = await api(`/projects/${projectId}`);
+  let project;
+  try {
+    project = await api(`/projects/${projectId}`);
+  } catch { return navigate('projects'); }
   if (!project) return navigate('projects');
 
   currentProject = project;

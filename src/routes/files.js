@@ -32,6 +32,23 @@ router.post('/upload/:projectId', upload.single('file'), (req, res) => {
   res.status(201).json(db.prepare('SELECT * FROM files WHERE id = ?').get(id));
 });
 
+// Download file (authenticated freelancer)
+router.get('/download/:id', (req, res) => {
+  const db = getDb();
+  const file = db.prepare(`
+    SELECT f.* FROM files f
+    JOIN projects p ON p.id = f.project_id
+    WHERE f.id = ? AND p.user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!file) return res.status(404).json({ error: 'File not found' });
+
+  const fs = require('fs');
+  const filePath = path.join(__dirname, '..', '..', 'uploads', file.stored_name);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found on disk' });
+  res.download(filePath, file.original_name);
+});
+
 router.delete('/:id', (req, res) => {
   const db = getDb();
   const file = db.prepare(`

@@ -27,7 +27,7 @@
 </div>
 
 <script>
-const token = window.location.pathname.split('/portal/')[1];
+const token = window.location.pathname.split('/portal/')[1].replace(/\/+$/, '');
 
 async function load() {
   const res = await fetch(`/api/portal/${token}`);

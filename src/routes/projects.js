@@ -77,6 +77,8 @@ router.delete('/:id', (req, res) => {
 // Milestones
 router.post('/:id/milestones', (req, res) => {
   const { title, description, dueDate } = req.body;
+  if (!title) return res.status(400).json({ error: 'Milestone title is required' });
+
   const db = getDb();
   const project = db.prepare('SELECT * FROM projects WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
   if (!project) return res.status(404).json({ error: 'Project not found' });

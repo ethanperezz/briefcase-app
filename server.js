@@ -16,7 +16,7 @@ seed();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// NOTE: /uploads is NOT served statically — files are only accessible via authenticated routes
 
 // API Routes
 app.use('/api/auth', require('./src/routes/auth'));
@@ -37,6 +37,12 @@ app.get('/portal/:token/project/:projectId', (req, res) => {
 // SPA fallback for dashboard
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(PORT, () => {
