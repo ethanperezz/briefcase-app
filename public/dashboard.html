@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Briefcase — Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-layout" id="app" style="display:none;">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">B</div>
+      <h1>Briefcase</h1>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="#" data-page="overview" class="active">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+        Overview
+      </a></li>
+      <li><a href="#" data-page="clients">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Clients
+      </a></li>
+      <li><a href="#" data-page="projects">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Projects
+      </a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-info">
+        <div class="avatar" id="userAvatar">SC</div>
+        <div>
+          <div class="user-name" id="userName">Sarah Chen</div>
+          <div class="user-email" id="userEmail">demo@briefcase.dev</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Overview Page -->
+    <div id="page-overview" class="page">
+      <div class="page-header">
+        <div>
+          <h2>Dashboard</h2>
+          <p class="subtitle">Welcome back! Here's your business at a glance.</p>
+        </div>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="section">
+        <div class="section-header">
+          <h3>Active Projects</h3>
+        </div>
+        <div class="list-grid" id="activeProjectsList"></div>
+      </div>
+    </div>
+
+    <!-- Clients Page -->
+    <div id="page-clients" class="page" style="display:none;">
+      <div class="page-header">
+        <div>
+          <h2>Clients</h2>
+          <p class="subtitle">Manage your clients and their portal access.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addClient')">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Add Client
+        </button>
+      </div>
+      <div class="list-grid" id="clientsList"></div>
+    </div>
+
+    <!-- Projects Page -->
+    <div id="page-projects" class="page" style="display:none;">
+      <div class="page-header">
+        <div>
+          <h2>Projects</h2>
+          <p class="subtitle">Track all your client projects in one place.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addProject')">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          New Project
+        </button>
+      </div>
+      <div class="list-grid" id="projectsList"></div>
+    </div>
+
+    <!-- Project Detail Page -->
+    <div id="page-project-detail" class="page" style="display:none;">
+      <div class="page-header">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('projects')" style="margin-bottom:8px;">&larr; Back to Projects</button>
+          <h2 id="projectName"></h2>
+          <p class="subtitle" id="projectClient"></p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <span class="badge" id="projectStatus"></span>
+        </div>
+      </div>
+
+      <div class="portal-link-card" id="portalLinkCard">
+        <label>Client Portal Link — share this with your client</label>
+        <div class="link-row">
+          <input type="text" id="portalLinkInput" readonly>
+          <button class="btn btn-sm btn-primary" onclick="copyPortalLink()">Copy</button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div>
+          <!-- Milestones -->
+          <div class="section">
+            <div class="section-header">
+              <h3>Milestones</h3>
+              <button class="btn btn-sm btn-secondary" onclick="openModal('addMilestone')">+ Add</button>
+            </div>
+            <div class="milestone-list" id="milestonesList"></div>
+          </div>
+
+          <!-- Messages -->
+          <div class="section">
+            <div class="section-header">
+              <h3>Messages</h3>
+            </div>
+            <div class="messages-container" id="messagesContainer"></div>
+            <div class="message-input-row">
+              <input type="text" class="form-input" id="messageInput" placeholder="Type a message...">
+              <button class="btn btn-primary btn-sm" onclick="sendMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Files -->
+          <div class="section">
+            <div class="section-header">
+              <h3>Files</h3>
+              <label class="btn btn-sm btn-secondary" style="cursor:pointer;">
+                + Upload
+                <input type="file" id="fileUpload" style="display:none;" onchange="uploadFile()">
+              </label>
+            </div>
+            <div class="file-list" id="filesList"></div>
+          </div>
+
+          <!-- Invoices -->
+          <div class="section">
+            <div class="section-header">
+              <h3>Invoices</h3>
+              <button class="btn btn-sm btn-secondary" onclick="openModal('addInvoice')">+ Create</button>
+            </div>
+            <div id="invoicesList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Login Page -->
+<div id="loginPage" class="login-page">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--surface-2);">
+    <div class="card" style="width:400px;">
+      <div style="text-align:center;margin-bottom:28px;">
+        <div style="width:48px;height:48px;background:var(--primary);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:22px;margin-bottom:12px;">B</div>
+        <h2 style="font-size:22px;font-weight:700;">Welcome to Briefcase</h2>
+        <p style="color:var(--text-secondary);font-size:14px;margin-top:4px;">Sign in to your dashboard</p>
+      </div>
+      <div id="loginForm">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" class="form-input" id="loginEmail" value="demo@briefcase.dev">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" class="form-input" id="loginPassword" value="demo123">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="login()">Sign In</button>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted);">
+          Don't have an account? <a href="#" onclick="showRegister()" style="color:var(--primary);">Sign up</a>
+        </p>
+      </div>
+      <div id="registerForm" style="display:none;">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" class="form-input" id="regName" placeholder="Sarah Chen">
+        </div>
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" class="form-input" id="regBusiness" placeholder="Sarah Chen Design">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="sarah@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" class="form-input" id="regPassword" placeholder="Min 6 characters">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="register()">Create Account</button>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted);">
+          Already have an account? <a href="#" onclick="showLogin()" style="color:var(--primary);">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

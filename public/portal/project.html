@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project — Client Portal</title>
+  <link rel="stylesheet" href="/portal/css/portal.css">
+</head>
+<body>
+
+<header class="portal-header" id="header">
+  <div class="container">
+    <div class="portal-brand">
+      <div class="brand-dot" id="brandDot">S</div>
+      <h1 id="businessName">Loading...</h1>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <a class="back-link" id="backLink" href="#">&larr; All Projects</a>
+  <h2 style="font-size:24px;font-weight:700;margin-bottom:4px;" id="projectName"></h2>
+  <p style="color:var(--text-secondary);font-size:14px;margin-bottom:28px;" id="projectDesc"></p>
+
+  <!-- Milestones -->
+  <div class="section" id="milestonesSection">
+    <h2>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      Progress
+    </h2>
+    <div class="milestone-list" id="milestonesList"></div>
+  </div>
+
+  <!-- Files -->
+  <div class="section" id="filesSection">
+    <h2>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      Files &amp; Deliverables
+    </h2>
+    <div class="file-grid" id="filesList"></div>
+  </div>
+
+  <!-- Messages -->
+  <div class="section">
+    <h2>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Messages
+    </h2>
+    <div class="messages-box">
+      <div class="messages-list" id="messagesList"></div>
+      <div class="msg-input-area">
+        <input type="text" id="msgInput" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoices -->
+  <div class="section" id="invoicesSection">
+    <h2>
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+      Invoices
+    </h2>
+    <div id="invoicesList"></div>
+  </div>
+</div>
+
+<div class="powered-by">
+  Powered by <a href="/">Briefcase</a>
+</div>
+
+<script>
+const parts = window.location.pathname.match(/\/portal\/([^/]+)\/project\/([^/]+)/);
+const portalToken = parts[1];
+const projectId = parts[2];
+
+document.getElementById('backLink').href = `/portal/${portalToken}`;
+
+async function load() {
+  const res = await fetch(`/api/portal/${portalToken}/projects/${projectId}`);
+  if (!res.ok) return;
+  const data = await res.json();
+
+  // Brand
+  document.documentElement.style.setProperty('--brand', data.freelancer.brandColor);
+  document.getElementById('brandDot').textContent = data.freelancer.businessName[0];
+  document.getElementById('brandDot').style.background = data.freelancer.brandColor;
+  document.getElementById('businessName').textContent = data.freelancer.businessName;
+  document.title = `${data.name} — ${data.freelancer.businessName}`;
+
+  document.getElementById('projectName').textContent = data.name;
+  document.getElementById('projectDesc').textContent = data.description || '';
+
+  // Milestones
+  if (data.milestones.length) {
+    document.getElementById('milestonesList').innerHTML = data.milestones.map(m => `
+      <div class="milestone-item">
+        <div class="dot ${m.status}">
+          ${m.status === 'completed' ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+        </div>
+        <span class="m-title ${m.status === 'completed' ? 'done' : ''}">${esc(m.title)}</span>
+        <span class="badge badge-${m.status}">${m.status.replace('_',' ')}</span>
+      </div>
+    `).join('');
+  } else {
+    document.getElementById('milestonesSection').style.display = 'none';
+  }
+
+  // Files
+  if (data.files.length) {
+    document.getElementById('filesList').innerHTML = data.files.map(f => `
+      <a class="file-card" href="/api/portal/${portalToken}/files/${f.id}" download>
+        <div class="f-icon">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <div class="f-name">${esc(f.original_name)}</div>
+          <div class="f-size">${formatSize(f.file_size)}</div>
+        </div>
+      </a>
+    `).join('');
+  } else {
+    document.getElementById('filesSection').style.display = 'none';
+  }
+
+  // Messages
+  renderMessages(data.messages);
+
+  // Invoices
+  if (data.invoices.length) {
+    document.getElementById('invoicesList').innerHTML = data.invoices.map(inv => `
+      <div class="invoice-card">
+        <div class="inv-left">
+          <div>
+            <div class="inv-num">${esc(inv.invoice_number)}</div>
+            <div class="inv-desc">${esc(inv.description || '')}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="badge badge-${inv.status}">${inv.status}</span>
+          <div class="inv-amount">$${Number(inv.amount).toLocaleString()}</div>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    document.getElementById('invoicesSection').style.display = 'none';
+  }
+}
+
+function renderMessages(messages) {
+  const list = document.getElementById('messagesList');
+  if (!messages.length) {
+    list.innerHTML = '<div class="empty">No messages yet. Start the conversation!</div>';
+    return;
+  }
+
+  list.innerHTML = messages.map(m => {
+    const isClient = m.sender_type === 'client';
+    const initials = m.sender_name.split(' ').map(n => n[0]).join('');
+    return `
+      <div class="msg ${isClient ? 'from-client' : 'from-freelancer'}">
+        <div class="avatar">${initials}</div>
+        <div>
+          <div class="bubble">${esc(m.content)}</div>
+          <div class="time">${new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  list.scrollTop = list.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const content = input.value.trim();
+  if (!content) return;
+
+  await fetch(`/api/portal/${portalToken}/projects/${projectId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+
+  input.value = '';
+  load(); // Reload
+}
+
+document.getElementById('msgInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+function formatSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+load();
+</script>
+</body>
+</html>

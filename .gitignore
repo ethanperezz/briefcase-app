@@ -1,0 +1,5 @@
+node_modules/
+briefcase.db
+uploads/*
+!uploads/.gitkeep
+.env

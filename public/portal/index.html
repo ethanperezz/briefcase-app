@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Portal — Briefcase</title>
+  <link rel="stylesheet" href="/portal/css/portal.css">
+</head>
+<body>
+
+<header class="portal-header" id="header">
+  <div class="container">
+    <div class="portal-brand">
+      <div class="brand-dot" id="brandDot">S</div>
+      <h1 id="businessName">Loading...</h1>
+    </div>
+    <div class="portal-greeting" id="greeting"></div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="projectsContainer"></div>
+</div>
+
+<div class="powered-by">
+  Powered by <a href="/">Briefcase</a>
+</div>
+
+<script>
+const token = window.location.pathname.split('/portal/')[1];
+
+async function load() {
+  const res = await fetch(`/api/portal/${token}`);
+  if (!res.ok) {
+    document.getElementById('projectsContainer').innerHTML = '<div class="empty"><h2>Portal not found</h2><p>This link may be invalid or expired.</p></div>';
+    return;
+  }
+  const data = await res.json();
+  const { client, freelancer, projects } = data;
+
+  // Set brand
+  document.documentElement.style.setProperty('--brand', freelancer.brandColor);
+  document.getElementById('brandDot').textContent = freelancer.businessName[0];
+  document.getElementById('brandDot').style.background = freelancer.brandColor;
+  document.getElementById('businessName').textContent = freelancer.businessName;
+  document.getElementById('greeting').textContent = `Welcome, ${client.name}`;
+  document.title = `${freelancer.businessName} — Client Portal`;
+
+  if (!projects.length) {
+    document.getElementById('projectsContainer').innerHTML = '<div class="empty"><p>No projects yet. Check back soon!</p></div>';
+    return;
+  }
+
+  document.getElementById('projectsContainer').innerHTML = projects.map(p => {
+    const progress = p.total_milestones ? Math.round(p.completed_milestones / p.total_milestones * 100) : 0;
+    return `
+      <div class="project-card" onclick="location.href='/portal/${token}/project/${p.id}'">
+        <h3>${esc(p.name)}</h3>
+        ${p.description ? `<p class="project-desc">${esc(p.description)}</p>` : ''}
+        <div class="project-meta">
+          <span class="badge badge-${p.status}">${p.status.replace('_',' ')}</span>
+          <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+          <span style="font-size:13px;color:var(--text-secondary);">${p.completed_milestones}/${p.total_milestones} milestones</span>
+          ${p.due_date ? `<span style="font-size:13px;color:var(--text-muted);">Due ${new Date(p.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+load();
+</script>
+</body>
+</html>
